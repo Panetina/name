@@ -1,24 +1,31 @@
 package com.elarion;
 
+import com.elarion.command.CNameCommand;
+import com.elarion.util.NameStorage;
 import net.fabricmc.api.ModInitializer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 
 public class Name implements ModInitializer {
-	public static final String MOD_ID = "name";
+    public static final String MOD_ID = "name";
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    @Override
+    public void onInitialize() {
+        // Initialize storage
+        NameStorage.load();
 
-	@Override
-	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
+        // Register commands
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            CNameCommand.register(dispatcher);
+        });
 
-		LOGGER.info("Hello Fabric world!");
-	}
+        // Set server reference and save data when server stops
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            NameStorage.setServer(server);
+        });
+
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            NameStorage.save();
+        });
+    }
 }
